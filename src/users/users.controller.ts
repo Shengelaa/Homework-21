@@ -20,10 +20,12 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
   @Get()
   getAllUsers(@Query() query: QueryParamsDto) {
-    const { page, take } = query;
+    const { page, take, gender, email } = query;
+    const genderPipe = new UserGenderPipe();
+    const validatedGender = genderPipe.transform(gender, { type: 'body' });
 
     console.log(page, take, 'page and query');
-    return this.usersService.getAllUsers({ page, take });
+    return this.usersService.getAllUsers({ page, take, gender, email });
   }
 
   @Get(':id')

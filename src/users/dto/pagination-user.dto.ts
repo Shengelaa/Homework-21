@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class QueryParamsDto {
   @IsOptional()
@@ -13,4 +13,12 @@ export class QueryParamsDto {
   @IsNumber()
   @Max(30)
   take: number = 30;
+
+  @IsOptional()
+  @IsString()
+  gender: string;
+
+  @IsOptional()
+  @IsString()
+  email: string;
 }

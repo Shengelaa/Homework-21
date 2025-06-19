@@ -23,13 +23,21 @@ export class UsersService {
       id: 2,
       name: 'bidzina',
       lastname: 'ivanishvili',
-      email: 'bera@gmail.com',
+      email: 'bidzinalomia@gmail.com',
       phoneNumber: 599999999,
       gender: 'female',
     },
+    {
+      id: 3,
+      name: 'bera',
+      lastname: 'ivanishvili',
+      email: 'bera@gmail.com',
+      phoneNumber: 599999999,
+      gender: 'other',
+    },
   ];
 
-  getAllUsers({ page, take }) {
+  getAllUsers({ page, take, gender, email }) {
     if (!page && !take) {
       page = 1;
       take = 30;
@@ -44,7 +52,24 @@ export class UsersService {
 
     const paginatedUsers = this.users.slice(startIndex, endIndex);
     console.log(page, take, 'service');
-    return paginatedUsers;
+
+    let Genderfilter = paginatedUsers;
+
+    console.log(gender, 'gender from service');
+    if (gender) {
+      Genderfilter = paginatedUsers.filter(
+        (users) => users.gender?.toLowerCase() === gender.toLowerCase(),
+      );
+    }
+
+    let finalFilter = Genderfilter;
+    if (email) {
+      const search = email.toLowerCase().trim();
+      finalFilter = Genderfilter.filter((user) =>
+        user.email?.toLowerCase().includes(search),
+      );
+    }
+    return finalFilter;
   }
 
   getUserById(id: number) {
