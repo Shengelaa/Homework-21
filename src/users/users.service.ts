@@ -69,6 +69,11 @@ export class UsersService {
         user.email?.toLowerCase().includes(search),
       );
     }
+
+    if (finalFilter.length === 0) {
+      throw new NotFoundException('404 NOT FOUND, NO USERS FOUND WITH GIVEN FILTERS');
+    }
+
     return finalFilter;
   }
 

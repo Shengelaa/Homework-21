@@ -38,6 +38,12 @@ export class ExpensesService {
       );
     }
 
+    if (result.length === 0) {
+      throw new NotFoundException(
+        '404 NOT FOUND, NO EXPENSE FOUND WITH GIVEN FILTERS',
+      );
+    }
+
     return result;
   }
 
