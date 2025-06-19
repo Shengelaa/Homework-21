@@ -29,8 +29,22 @@ export class UsersService {
     },
   ];
 
-  getAllUsers() {
-    return this.users;
+  getAllUsers({ page, take }) {
+    if (!page && !take) {
+      page = 1;
+      take = 30;
+    }
+
+    console.log(take);
+    const currentPage = page > 0 ? page : 1;
+    const pageSize = take > 0 ? take : 10;
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+
+    const paginatedUsers = this.users.slice(startIndex, endIndex);
+    console.log(page, take, 'service');
+    return paginatedUsers;
   }
 
   getUserById(id: number) {
@@ -41,14 +55,6 @@ export class UsersService {
 
   createUser(createUserDto: CreateUserDto) {
     const { name, lastname, email, phoneNumber, gender } = createUserDto;
-    if (!name || !lastname || !email || !phoneNumber || !gender) {
-      throw new HttpException(
-        'Give all Required Fields',
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    console.log(gender, '-------');
 
     const lastId = this.users[this.users.length - 1]?.id || 0;
     const newUser = {

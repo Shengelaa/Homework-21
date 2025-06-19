@@ -6,18 +6,28 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
+import { QueryParamsDto } from './dto/pagination-expense.dto';
+import { CategoryPipe } from './pipes/category.pipe';
 
 @Controller('expenses')
 export class ExpensesController {
   constructor(private expensesService: ExpensesService) {}
 
   @Get()
-  getAllExpenses() {
-    return this.expensesService.getAllExpenses();
+  getAllExpenses(@Query() query: QueryParamsDto) {
+    const { page, take, category } = query;
+    const categoryFilter = new CategoryPipe();
+    const CategoryFilterSender = categoryFilter.transform(category, {
+      type: 'body',
+    });
+
+    console.log(page, take, 'page and query');
+    return this.expensesService.getAllExpenses({ page, take, category });
   }
 
   @Get(':id')
@@ -40,6 +50,6 @@ export class ExpensesController {
 
   @Put(':id')
   updateUser(@Param('id') id, @Body() updateExpenseDto: UpdateExpenseDto) {
-    return this.expensesService.updateExpenseById(Number(id), updateExpenseDto)
+    return this.expensesService.updateExpenseById(Number(id), updateExpenseDto);
   }
 }
