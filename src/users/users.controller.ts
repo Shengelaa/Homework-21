@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
   Put,
@@ -28,6 +30,14 @@ export class UsersController {
     return this.usersService.getAllUsers({ page, take, gender, email });
   }
 
+  @Post('/upgrade-subscription')
+  getUserByEmailAndUpgradeSubscription(@Headers('email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email header is required');
+    }
+
+    return this.usersService.getUserByEmailAndUpgradeSubscription({ email });
+  }
   @Get(':id')
   getUserById(@Param('id') id) {
     return this.usersService.getUserById(Number(id));

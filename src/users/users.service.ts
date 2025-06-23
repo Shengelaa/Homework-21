@@ -18,6 +18,8 @@ export class UsersService {
       email: 'shengela@gmail.com',
       phoneNumber: 59999999,
       gender: 'male',
+      subscriptionStartDate: '2024-05-23T00:06:36.751Z',
+      subscriptionEndDate: '2024-06-23T00:06:36.751Z',
     },
     {
       id: 2,
@@ -26,6 +28,9 @@ export class UsersService {
       email: 'bidzinalomia@gmail.com',
       phoneNumber: 599999999,
       gender: 'female',
+
+      subscriptionStartDate: '2025-06-23T00:06:36.751Z',
+      subscriptionEndDate: '2025-07-23T00:06:36.751Z',
     },
     {
       id: 3,
@@ -34,8 +39,34 @@ export class UsersService {
       email: 'bera@gmail.com',
       phoneNumber: 599999999,
       gender: 'other',
+      subscriptionStartDate: '2025-05-23T00:06:36.751Z',
+      subscriptionEndDate: '2025-06-23T00:06:36.751Z',
     },
   ];
+
+  getUserByEmailAndUpgradeSubscription({ email }: { email: string }) {
+    const user = this.users.find(
+      (user) => user.email.toLowerCase() === email.toLowerCase(),
+    );
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const newStartDate = new Date();
+    const newEndDate = new Date();
+    newEndDate.setMonth(newEndDate.getMonth() + 1);
+
+    user.subscriptionStartDate = newStartDate.toISOString();
+    user.subscriptionEndDate = newEndDate.toISOString();
+
+    console.log('User subscription upgraded:', user);
+
+    return {
+      message: 'Subscription upgraded',
+      user,
+    };
+  }
 
   getAllUsers({ page, take, gender, email }) {
     if (!page && !take) {
@@ -71,10 +102,18 @@ export class UsersService {
     }
 
     if (finalFilter.length === 0) {
-      throw new NotFoundException('404 NOT FOUND, NO USERS FOUND WITH GIVEN FILTERS');
+      throw new NotFoundException(
+        '404 NOT FOUND, NO USERS FOUND WITH GIVEN FILTERS',
+      );
     }
 
     return finalFilter;
+  }
+
+  getUserByEmail(email: string) {
+    return this.users.find(
+      (user) => user.email.toLowerCase() === email.toLowerCase(),
+    );
   }
 
   getUserById(id: number) {
@@ -85,6 +124,9 @@ export class UsersService {
 
   createUser(createUserDto: CreateUserDto) {
     const { name, lastname, email, phoneNumber, gender } = createUserDto;
+    const subscriptionStartDate = new Date().toISOString();
+    const subscriptionEndDate = new Date();
+    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
 
     const lastId = this.users[this.users.length - 1]?.id || 0;
     const newUser = {
@@ -94,6 +136,8 @@ export class UsersService {
       email,
       phoneNumber,
       gender,
+      subscriptionStartDate,
+      subscriptionEndDate: subscriptionEndDate.toISOString(),
     };
 
     this.users.push(newUser);
