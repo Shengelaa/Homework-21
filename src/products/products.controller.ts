@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Headers,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -19,18 +20,23 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-
-  createExpense(@Body() createProductDto: CreateProductDto) {
+  createExpense(
+    @Headers('user-id') userId: string,
+    @Body() createProductDto: CreateProductDto,
+  ) {
     const price = createProductDto.price;
     const name = createProductDto.name;
     const category = createProductDto.category;
     const description = createProductDto.description;
-    return this.productsService.create({
-      price,
-      name,
-      category,
-      description,
-    });
+    return this.productsService.create(
+      {
+        price,
+        name,
+        category,
+        description,
+      },
+      userId,
+    );
   }
 
   @Get()
@@ -41,16 +47,16 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
+  findOne(@Param('id') id) {
+    return this.productsService.findOne(String(id));
   }
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(+id, updateProductDto);
+    return this.productsService.update(id, updateProductDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+    return this.productsService.remove(id);
   }
 }

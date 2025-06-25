@@ -6,7 +6,7 @@ import { UsersService } from '../users/users.service';
 export class SafeGuard implements CanActivate {
   constructor(private readonly usersService: UsersService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const req: Request = context.switchToHttp().getRequest();
     const email = req.headers.email as string;
 
@@ -16,19 +16,29 @@ export class SafeGuard implements CanActivate {
       return true;
     }
 
-    const user = this.usersService.getUserByEmail(email);
+    try {
 
-    console.log('User found', user);
+      const user = await this.usersService.getUserByEmail(
+        email.toLowerCase().trim(),
+      );
 
-    if (!user) {
+      if (!user) {
+
+        req['hasSale'] = false;
+        return true;
+      }
+
+
+      const now = new Date();
+      const subscriptionEnd = new Date(user.subscriptionEndDate.toString());
+
+
+      req['hasSale'] = subscriptionEnd > now;
+    } catch (error) {
+
+      console.error('Error in SafeGuard:', error);
       req['hasSale'] = false;
-      return true;
     }
-
-    const now = new Date();
-    const subscriptionEnd = new Date(user.subscriptionEndDate);
-
-    req['hasSale'] = subscriptionEnd > now;
 
     return true;
   }

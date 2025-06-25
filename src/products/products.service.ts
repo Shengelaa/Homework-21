@@ -5,9 +5,17 @@ import {
 } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { Product } from './schema/product.schema';
+import { User } from 'src/users/schema/user.schema';
 
 @Injectable()
 export class ProductsService {
+  constructor(
+    @InjectModel('product') private productModel: Model<Product>,
+    @InjectModel('user') private userModel: Model<User>,
+  ) {}
   private products = [
     {
       id: 1,
@@ -31,81 +39,104 @@ export class ProductsService {
       description: 'nice food',
     },
   ];
-  create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, userId: string) {
+    const existUser = await this.userModel.findById(userId);
+    if (!existUser) throw new BadRequestException('User not found');
+
     const { price, name, category, description } = createProductDto;
+
     if (!price || !name || !category || !description) {
-      throw new BadRequestException('Givee All Required fields');
+      throw new BadRequestException(
+        'Please provide category, quantity, and price',
+      );
     }
-    const lastId = this.products[this.products.length - 1]?.id || 0;
 
-    const newProduct = {
-      id: lastId + 1,
-      price,
-      name,
+    const newProduct = await this.productModel.create({
       category,
+
+      price,
+
+      name,
       description,
-    };
+      owner: existUser._id,
+    });
 
-    this.products.push(newProduct);
+    existUser.products.push(newProduct._id);
+    await existUser.save();
 
-    return 'created successfully';
+    return newProduct;
   }
-
-  findAll(hasSale: boolean = false) {
+  async findAll(hasSale: boolean = false): Promise<Product[]> {
     const discount = 0.3;
 
+    const products = await this.productModel.find().lean();
+
     if (hasSale) {
-      return this.products.map((product) => ({
+      return products.map((product) => ({
         ...product,
         price: product.price * (1 - discount),
       }));
     }
 
-    return this.products;
+    return products;
   }
 
-  findOne(id: number) {
-    const product = this.products.find((el) => el.id === id);
+  async findOne(id: string) {
+    const product = await this.productModel.findById(id);
 
     if (!product)
-      throw new NotFoundException('No expense found with matching id');
+      throw new NotFoundException('No product found with matching id');
 
     return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    const index = this.products.findIndex((el) => el.id === id);
-    if (index === -1) throw new NotFoundException('user not found');
-
-    const updateReq: Partial<UpdateProductDto> = {};
-    if (updateProductDto.price) {
-      updateReq.price = updateProductDto.price;
-    }
-    if (updateProductDto.name) {
-      updateReq.name = updateProductDto.name;
-    }
-    if (updateProductDto.category) {
-      updateReq.category = updateProductDto.category;
+  async update(id: string, updateProductDto: UpdateProductDto) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid product ID');
     }
 
-    if (updateProductDto.description) {
-      updateReq.description = updateProductDto.description;
+    const updatedProduct = await this.productModel.findByIdAndUpdate(
+      id,
+      { $set: updateProductDto },
+      { new: true },
+    );
+
+    if (!updatedProduct) {
+      throw new NotFoundException('Product not found');
     }
 
-    this.products[index] = {
-      ...this.products[index],
-      ...updateReq,
+    return {
+      message: 'Updated successfully',
+      product: updatedProduct,
     };
-
-    return 'updated successfully';
   }
 
-  remove(id: number) {
-    const index = this.products.findIndex((el) => el.id === id);
-    if (index === -1) {
-      throw new NotFoundException('products not found with mattching it');
-    }
-    this.products.splice(index, 1);
-    return 'product Deleted successfully';
+  async remove(id: string) {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new BadRequestException('Invalid product ID');
   }
+
+ 
+  const product = await this.productModel.findByIdAndDelete(id);
+
+  if (!product) {
+    throw new NotFoundException(
+      'Gavrolot errori , davartyat errori ar moizebna producti :D',
+    );
+  }
+
+
+  await this.userModel.updateOne(
+    { _id: product.owner },           
+    { $pull: { products: product._id } }
+  );
+
+  return {
+    message: 'weishala',
+    data: {
+      product,
+    },
+  };
+}
+
 }

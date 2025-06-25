@@ -40,7 +40,7 @@ export class UsersController {
   }
   @Get(':id')
   getUserById(@Param('id') id) {
-    return this.usersService.getUserById(Number(id));
+    return this.usersService.getUserById(id);
   }
 
   @Post()
@@ -60,16 +60,16 @@ export class UsersController {
 
   @Delete(':id')
   deleteUser(@Param('id') id) {
-    return this.usersService.deleteUserById(Number(id));
+    return this.usersService.deleteUserById(String(id));
   }
 
   @Put(':id')
-  udpateUser(@Param('id') id, @Body() updateUserDto: UpdateUserDto) {
+  updateUserById(@Param('id') id, @Body() updateUserDto: UpdateUserDto) {
     const { gender } = updateUserDto;
 
     const genderPipe = new UserGenderPipe();
     const validatedGender = genderPipe.transform(gender, { type: 'body' });
 
-    return this.usersService.updateUserById(Number(id), updateUserDto);
+    return this.usersService.updateUserById(id, updateUserDto);
   }
 }

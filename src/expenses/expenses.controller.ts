@@ -3,16 +3,19 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { QueryParamsDto } from './dto/pagination-expense.dto';
 import { CategoryPipe } from './pipes/category.pipe';
+import { HasUserId } from 'src/guards/has-user-id.guard';
 
 @Controller('expenses')
 export class ExpensesController {
@@ -32,24 +35,29 @@ export class ExpensesController {
 
   @Get(':id')
   getExpenseById(@Param('id') id) {
-    return this.expensesService.getExpenseById(Number(id));
+    return this.expensesService.getExpenseById(String(id));
   }
 
   @Post()
-  createExpense(@Body() CreateExpenseDto: CreateExpenseDto) {
+  @UseGuards(HasUserId)
+  createExpense(
+    @Headers('user-id') userId: string,
+    @Body() CreateExpenseDto: CreateExpenseDto,
+  ) {
     const category = CreateExpenseDto.category;
     const quantity = CreateExpenseDto.quantity;
     const price = CreateExpenseDto.price;
-    return this.expensesService.createExpense({ category, quantity, price });
+
+    return this.expensesService.createExpense(CreateExpenseDto, userId);
   }
 
   @Delete(':id')
   deleteUser(@Param('id') id) {
-    return this.expensesService.deleteExpenseById(Number(id));
+    return this.expensesService.deleteExpenseById(String(id));
   }
 
   @Put(':id')
   updateUser(@Param('id') id, @Body() updateExpenseDto: UpdateExpenseDto) {
-    return this.expensesService.updateExpenseById(Number(id), updateExpenseDto);
+    return this.expensesService.updateExpenseById(String(id), updateExpenseDto);
   }
 }
