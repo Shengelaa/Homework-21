@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -86,7 +87,14 @@ export class ExpensesService {
     return newExpense;
   }
 
-  async deleteExpenseById(id: string) {
+  async deleteExpenseById(id: string, userId: string) {
+    const expense = await this.expenseModel.findById(id);
+    if (!expense) {
+      throw new NotFoundException('Not found');
+    }
+    if (userId !== String(expense.owner)) {
+      throw new ForbiddenException('This is not ur expense');
+    }
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid expense ID');
     }
@@ -107,7 +115,11 @@ export class ExpensesService {
     return { message: 'Expense deleted successfully' };
   }
 
-  async updateExpenseById(id: string, updateExpenseDto: UpdateExpenseDto) {
+  async updateExpenseById(
+    id: string,
+    updateExpenseDto: UpdateExpenseDto,
+    userId: string,
+  ) {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid expense ID');
     }
@@ -116,6 +128,10 @@ export class ExpensesService {
 
     if (!existingExpense) {
       throw new NotFoundException('Expense not found');
+    }
+
+    if (userId !== String(existingExpense.owner)) {
+      throw new ForbiddenException('This is not ur expense');
     }
 
     if (updateExpenseDto.category) {

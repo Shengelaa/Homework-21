@@ -27,7 +27,7 @@ export class Product {
 
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'users',
+    ref: 'user',
     required: true,
   })
   owner: mongoose.Schema.Types.ObjectId;

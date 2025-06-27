@@ -16,7 +16,9 @@ import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { QueryParamsDto } from './dto/pagination-expense.dto';
 import { CategoryPipe } from './pipes/category.pipe';
 import { HasUserId } from 'src/guards/has-user-id.guard';
-
+import { IsAuthGuard } from 'src/auth/guards/isAuth.guard';
+import { UserId } from 'src/users/decorators/user.decorator';
+@UseGuards(IsAuthGuard)
 @Controller('expenses')
 export class ExpensesController {
   constructor(private expensesService: ExpensesService) {}
@@ -41,7 +43,7 @@ export class ExpensesController {
   @Post()
   @UseGuards(HasUserId)
   createExpense(
-    @Headers('user-id') userId: string,
+    @UserId() userId: string,
     @Body() CreateExpenseDto: CreateExpenseDto,
   ) {
     const category = CreateExpenseDto.category;
@@ -52,12 +54,20 @@ export class ExpensesController {
   }
 
   @Delete(':id')
-  deleteUser(@Param('id') id) {
-    return this.expensesService.deleteExpenseById(String(id));
+  deleteUser(@Param('id') id, @UserId() userId: string) {
+    return this.expensesService.deleteExpenseById(String(id), String(userId));
   }
 
   @Put(':id')
-  updateUser(@Param('id') id, @Body() updateExpenseDto: UpdateExpenseDto) {
-    return this.expensesService.updateExpenseById(String(id), updateExpenseDto);
+  updateUser(
+    @Param('id') id,
+    @Body() updateExpenseDto: UpdateExpenseDto,
+    @UserId() userId: string,
+  ) {
+    return this.expensesService.updateExpenseById(
+      String(id),
+      updateExpenseDto,
+      String(userId),
+    );
   }
 }

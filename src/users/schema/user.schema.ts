@@ -31,10 +31,13 @@ export class User {
     required: true,
   })
   gender: String;
+
   @Prop({
     type: String,
     required: true,
+    select: false,
   })
+  password: string;
   subscriptionStartDate: String;
   @Prop({
     type: String,

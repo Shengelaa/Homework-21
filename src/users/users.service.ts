@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -18,7 +19,7 @@ export class UsersService {
   constructor(
     @InjectModel('expense') private expenseModel: Model<Expense>,
     @InjectModel('user') private userModel: Model<User>,
-      @InjectModel('product') private productModel: Model<Product>,
+    @InjectModel('product') private productModel: Model<Product>,
   ) {}
 
   async getUserByEmailAndUpgradeSubscription({ email }: { email: string }) {
@@ -113,8 +114,13 @@ export class UsersService {
     return { success: 'ok', data: newUser };
   }
 
-  async deleteUserById(id: string) {
+  async deleteUserById(id: string, userId: string) {
     const deletedUser = await this.userModel.findOneAndDelete({ _id: id });
+    console.log(userId, 'this is userId from token');
+    console.log(id, 'this is id provided from params');
+    if (id !== userId) {
+      throw new ForbiddenException('This is not ur account');
+    }
 
     if (!deletedUser) {
       throw new NotFoundException('User not found or already deleted');
@@ -134,9 +140,17 @@ export class UsersService {
     };
   }
 
-  async updateUserById(id: string, updateUserDto: UpdateUserDto) {
+  async updateUserById(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    userId: string,
+  ) {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid user ID');
+    }
+
+    if (id !== userId) {
+      throw new ForbiddenException('This is not ur account');
     }
 
     const updatedUser = await this.userModel.findByIdAndUpdate(

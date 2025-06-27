@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -41,6 +42,7 @@ export class ProductsService {
   ];
   async create(createProductDto: CreateProductDto, userId: string) {
     const existUser = await this.userModel.findById(userId);
+
     if (!existUser) throw new BadRequestException('User not found');
 
     const { price, name, category, description } = createProductDto;
@@ -90,11 +92,19 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto, userId: string) {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException('Invalid product ID');
     }
+    const product = await this.productModel.findById(id);
 
+    if (!product) {
+      throw new NotFoundException('cant find product with that id');
+    }
+
+    if (userId !== String(product.owner)) {
+      throw new ForbiddenException('this is not ur account!!!!');
+    }
     const updatedProduct = await this.productModel.findByIdAndUpdate(
       id,
       { $set: updateProductDto },
@@ -111,32 +121,34 @@ export class ProductsService {
     };
   }
 
-  async remove(id: string) {
-  if (!Types.ObjectId.isValid(id)) {
-    throw new BadRequestException('Invalid product ID');
-  }
+  async remove(id: string, userId: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('Invalid product ID');
+    }
+     const product = await this.productModel.findById(id);
 
- 
-  const product = await this.productModel.findByIdAndDelete(id);
+    if (!product) {
+      throw new NotFoundException('cant find product with that id');
+    }
 
-  if (!product) {
-    throw new NotFoundException(
-      'Gavrolot errori , davartyat errori ar moizebna producti :D',
+    if (userId !== String(product.owner)) {
+      throw new ForbiddenException('this is not ur account!!!!');
+    }
+
+    const Deleteproduct = await this.productModel.findByIdAndDelete(id);
+
+   
+
+    await this.userModel.updateOne(
+      { _id: product.owner },
+      { $pull: { products: product._id } },
     );
+
+    return {
+      message: 'weishala',
+      data: {
+        product,
+      },
+    };
   }
-
-
-  await this.userModel.updateOne(
-    { _id: product.owner },           
-    { $pull: { products: product._id } }
-  );
-
-  return {
-    message: 'weishala',
-    data: {
-      product,
-    },
-  };
-}
-
 }
